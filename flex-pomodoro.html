@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ポモドーロタイマー</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        .settings-panel {
+            background: #f0f4ff;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .settings-panel h3 {
+            color: #667eea;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .setting-group {
+            margin-bottom: 1rem;
+        }
+
+        .setting-group label {
+            display: block;
+            color: #555;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .pattern-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .pattern-btn {
+            flex: 1;
+            padding: 0.7rem;
+            font-size: 0.85rem;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pattern-btn:hover {
+            background: #e8ecff;
+        }
+
+        .pattern-btn.active {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .time-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-size: 0.85rem;
+            color: #555;
+            margin-bottom: 0.3rem;
+        }
+
+        .input-group input {
+            padding: 0.6rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .apply-btn {
+            width: 100%;
+            padding: 0.8rem;
+            margin-top: 1rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .apply-btn:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+        }
+
+        .session-info {
+            background: #f7fafc;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .session-info h2 {
+            color: #667eea;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .session-info p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .session-selector {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .session-select-btn {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .session-select-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .session-select-btn.active {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .timer-display {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #667eea;
+            margin: 2rem 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .phase-indicator {
+            font-size: 1.3rem;
+            color: #555;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .phase-indicator.break {
+            color: #48bb78;
+        }
+
+        .progress-container {
+            margin: 1.5rem 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 1s linear;
+        }
+
+        .progress-text {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .start-btn {
+            background: #48bb78;
+            color: white;
+        }
+
+        .start-btn:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+
+        .pause-btn {
+            background: #ed8936;
+            color: white;
+        }
+
+        .pause-btn:hover {
+            background: #dd6b20;
+            transform: translateY(-2px);
+        }
+
+        .reset-btn {
+            background: #f56565;
+            color: white;
+        }
+
+        .reset-btn:hover {
+            background: #e53e3e;
+            transform: translateY(-2px);
+        }
+
+        .total-time {
+            color: #666;
+            font-size: 1rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f7fafc;
+            border-radius: 10px;
+        }
+
+        .increment-input {
+            margin-top: 0.5rem;
+        }
+
+        .increment-input input {
+            width: 100%;
+        }
+
+.bgm-controls {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #f7fafc;
+            border-radius: 10px;
+        }
+
+        .bgm-controls h3 {
+            color: #555;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 0.5rem;
+        }
+
+        .volume-control input {
+            flex: 1;
+            max-width: 200px;
+        }
+
+        .file-upload {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .file-upload h4 {
+            color: #555;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .bgm-section {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f0f4ff;
+            border-radius: 8px;
+        }
+
+        .bgm-section h5 {
+            color: #667eea;
+            font-size: 0.85rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .file-item label {
+            font-size: 0.8rem;
+            color: #555;
+            min-width: 60px;
+        }
+
+        input[type="file"] {
+            font-size: 0.75rem;
+            flex: 1;
+        }
+
+        .instructions {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background: #fff3cd;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍅 集中タイマー</h1>
+        
+        <div class="settings-panel">
+            <h3>⚙️ タイマー設定</h3>
+            
+            <div class="setting-group">
+                <label>作業時間パターン</label>
+                <div class="pattern-selector">
+                    <button class="pattern-btn active" id="uniformBtn">一律</button>
+                    <button class="pattern-btn" id="incrementBtn">段階的に増加</button>
+                </div>
+            </div>
+
+            <div class="time-inputs">
+                <div class="input-group">
+                    <label>作業時間 (分)</label>
+                    <input type="number" id="workTime" value="30" min="1" max="120">
+                </div>
+                <div class="input-group">
+                    <label>休憩時間 (分)</label>
+                    <input type="number" id="breakTime" value="5" min="1" max="30">
+                </div>
+            </div>
+
+            <div id="incrementSettings" style="display: none;">
+                <div class="increment-input">
+                    <label>増加量 (分/セッション)</label>
+                    <input type="number" id="incrementValue" value="5" min="1" max="20">
+                </div>
+            </div>
+
+            <button class="apply-btn" id="applyBtn">設定を適用</button>
+        </div>
+
+        <div class="session-info">
+            <h2 id="sessionTitle">セッション 1/5</h2>
+            <p id="sessionLabel">30分作業 → 5分休憩</p>
+            <div class="session-selector" id="sessionSelector"></div>
+        </div>
+
+        <div class="phase-indicator" id="phaseIndicator">作業時間</div>
+        <div class="timer-display" id="display">30:00</div>
+
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress"></div>
+            </div>
+            <div class="progress-text" id="progressText">0 / 220 分完了</div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn start-btn" id="startBtn">開始</button>
+            <button class="control-btn pause-btn" id="pauseBtn" style="display: none;">一時停止</button>
+            <button class="control-btn reset-btn" id="resetBtn">リセット</button>
+        </div>
+<div class="bgm-controls">
+            <h3>🎵 BGM音量</h3>
+            <div class="volume-control">
+                <span>🔇</span>
+                <input type="range" id="volumeControl" min="0" max="100" value="70">
+                <span>🔊</span>
+            </div>
+            
+            <div class="file-upload">
+                <h4>🎵 BGMファイル設定</h4>
+                
+                <div class="bgm-section">
+                    <h5>☕ 作業用BGM（4つ）</h5>
+                    <div class="file-item">
+                        <label>BGM 1:</label>
+                        <input type="file" id="workBGM1" accept="audio/*">
+                    </div>
+                    <div class="file-item">
+                        <label>BGM 2:</label>
+                        <input type="file" id="workBGM2" accept="audio/*">
+                    </div>
+                    <div class="file-item">
+                        <label>BGM 3:</label>
+                        <input type="file" id="workBGM3" accept="audio/*">
+                    </div>
+                    <div class="file-item">
+                        <label>BGM 4:</label>
+                        <input type="file" id="workBGM4" accept="audio/*">
+                    </div>
+                </div>
+
+                <div class="bgm-section">
+                    <h5>🎵 休憩用BGM（4つ）</h5>
+                    <div class="file-item">
+                        <label>BGM 1:</label>
+                        <input type="file" id="breakBGM1" accept="audio/*">
+                    </div>
+                    <div class="file-item">
+                        <label>BGM 2:</label>
+                        <input type="file" id="breakBGM2" accept="audio/*">
+                    </div>
+                    <div class="file-item">
+                        <label>BGM 3:</label>
+                        <input type="file" id="breakBGM3" accept="audio/*">
+                    </div>
+                    <div class="file-item">
+                        <label>BGM 4:</label>
+                        <input type="file" id="breakBGM4" accept="audio/*">
+                    </div>
+                </div>
+
+                <div class="instructions">
+                    💡 各セッションでランダムに選択されます
+                </div>
+            </div>
+        </div>
+
+        <div class="total-time" id="totalTime">
+            合計時間: 3時間40分 (220分)
+        </div>
+
+    <script>
+// BGM関連の変数
+let audioContext = null;
+let workBGMs = [null, null, null, null];
+let breakBGMs = [null, null, null, null];
+let currentAudio = null;
+let relaxBGM = null;
+
+// セッション関連の変数
+let sessions = [];
+let isIncremental = false;
+let baseWorkTime = 30;
+let baseBreakTime = 5;
+let incrementValue = 5;
+
+// タイマー関連の変数
+let currentSessionIndex = 0;
+let isBreakTime = false;
+let timeLeft = 0;
+let totalTime = 0;
+let isRunning = false;
+let timer = null;
+let totalElapsedMinutes = 0;
+
+// DOM要素の取得
+const display = document.getElementById('display');
+const startBtn = document.getElementById('startBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const resetBtn = document.getElementById('resetBtn');
+const progress = document.getElementById('progress');
+const progressText = document.getElementById('progressText');
+const phaseIndicator = document.getElementById('phaseIndicator');
+const sessionTitle = document.getElementById('sessionTitle');
+const sessionLabel = document.getElementById('sessionLabel');
+
+const uniformBtn = document.getElementById('uniformBtn');
+const incrementBtn = document.getElementById('incrementBtn');
+const workTimeInput = document.getElementById('workTime');
+const breakTimeInput = document.getElementById('breakTime');
+const incrementValueInput = document.getElementById('incrementValue');
+const incrementSettings = document.getElementById('incrementSettings');
+const applyBtn = document.getElementById('applyBtn');
+const volumeControl = document.getElementById('volumeControl');
+
+// ファイル入力要素を取得
+const workBGM1 = document.getElementById('workBGM1');
+const workBGM2 = document.getElementById('workBGM2');
+const workBGM3 = document.getElementById('workBGM3');
+const workBGM4 = document.getElementById('workBGM4');
+const breakBGM1 = document.getElementById('breakBGM1');
+const breakBGM2 = document.getElementById('breakBGM2');
+const breakBGM3 = document.getElementById('breakBGM3');
+const breakBGM4 = document.getElementById('breakBGM4');
+
+// セッション生成関数
+function generateSessions() {
+    sessions = [];
+    if (isIncremental) {
+        for (let i = 0; i < 5; i++) {
+            const workTime = baseWorkTime + (i * incrementValue);
+            sessions.push({
+                work: workTime,
+                break: baseBreakTime,
+                label: `${workTime}分作業 → ${baseBreakTime}分休憩`
+            });
+        }
+    } else {
+        for (let i = 0; i < 5; i++) {
+            sessions.push({
+                work: baseWorkTime,
+                break: baseBreakTime,
+                label: `${baseWorkTime}分作業 → ${baseBreakTime}分休憩`
+            });
+        }
+    }
+    updateTotalTime();
+    updateSessionButtons();
+}
+
+function updateTotalTime() {
+    const total = sessions.reduce((sum, s) => sum + s.work + s.break, 0);
+    const hours = Math.floor(total / 60);
+    const mins = total % 60;
+    document.getElementById('totalTime').textContent = 
+        `合計時間: ${hours}時間${mins}分 (${total}分)`;
+}
+
+function updateSessionButtons() {
+    const selector = document.getElementById('sessionSelector');
+    selector.innerHTML = '';
+    for (let i = 0; i < sessions.length; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'session-select-btn' + (i === currentSessionIndex ? ' active' : '');
+        btn.textContent = i + 1;
+        btn.addEventListener('click', function() {
+            selectSession(i);
+        });
+        selector.appendChild(btn);
+    }
+}
+
+// パターン選択イベント
+uniformBtn.addEventListener('click', function() {
+    uniformBtn.classList.add('active');
+    incrementBtn.classList.remove('active');
+    incrementSettings.style.display = 'none';
+    isIncremental = false;
+});
+
+incrementBtn.addEventListener('click', function() {
+    incrementBtn.classList.add('active');
+    uniformBtn.classList.remove('active');
+    incrementSettings.style.display = 'block';
+    isIncremental = true;
+});
+
+// 設定適用
+applyBtn.addEventListener('click', function() {
+    if (isRunning) {
+        alert('タイマーを停止してから設定を変更してください');
+        return;
+    }
+
+    baseWorkTime = parseInt(workTimeInput.value);
+    baseBreakTime = parseInt(breakTimeInput.value);
+    incrementValue = parseInt(incrementValueInput.value);
+
+    generateSessions();
+    resetTimer();
+});
+
+// 作業用BGMの読み込み
+[workBGM1, workBGM2, workBGM3, workBGM4].forEach(function(input, index) {
+    input.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const url = URL.createObjectURL(file);
+            const audio = new Audio(url);
+            audio.loop = true;
+            audio.volume = volumeControl.value / 100;
+            workBGMs[index] = audio;
+        }
+    });
+});
+
+// 休憩用BGMの読み込み
+[breakBGM1, breakBGM2, breakBGM3, breakBGM4].forEach(function(input, index) {
+    input.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const url = URL.createObjectURL(file);
+            const audio = new Audio(url);
+            audio.loop = true;
+            audio.volume = volumeControl.value / 100;
+            breakBGMs[index] = audio;
+        }
+    });
+});
+
+// リラックスBGM作成
+function createRelaxBGM() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    const bufferSize = audioContext.sampleRate * 4;
+    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+        const time = i / audioContext.sampleRate;
+        const c = Math.sin(2 * Math.PI * 261.63 * time);
+        const e = Math.sin(2 * Math.PI * 329.63 * time);
+        const g = Math.sin(2 * Math.PI * 392.00 * time);
+        const c2 = Math.sin(2 * Math.PI * 523.25 * time);
+        const lfo = Math.sin(2 * Math.PI * 0.3 * time) * 0.3 + 0.7;
+        const envelope = Math.sin(2 * Math.PI * 0.1 * time) * 0.5 + 0.5;
+        data[i] = ((c * 0.4 + e * 0.3 + g * 0.2 + c2 * 0.1) * lfo * envelope) * 0.15;
+    }
+
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+
+    const gainNode = audioContext.createGain();
+    gainNode.gain.value = volumeControl.value / 100 * 0.5;
+
+    source.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    return { source: source, gainNode: gainNode };
+}
+
+// チャイム音
+function playChime() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    const notes = [
+        { freq: 392, start: 0, duration: 0.5 },
+        { freq: 330, start: 0.6, duration: 0.5 },
+        { freq: 262, start: 1.2, duration: 0.5 },
+        { freq: 196, start: 1.8, duration: 1.0 }
+    ];
+
+    notes.forEach(function(note) {
+        const osc = audioContext.createOscillator();
+        const g = audioContext.createGain();
+        
+        osc.connect(g);
+        g.connect(audioContext.destination);
+        
+        osc.frequency.value = note.freq;
+        osc.type = 'sine';
+        
+        g.gain.setValueAtTime(0.3, audioContext.currentTime + note.start);
+        g.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + note.start + note.duration);
+        
+        osc.start(audioContext.currentTime + note.start);
+        osc.stop(audioContext.currentTime + note.start + note.duration);
+    });
+}
+
+// 全オーディオ停止
+function stopAllAudio() {
+    // 現在再生中のAudioを止める
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+    }
+    
+    // リラックスBGMを止める
+    if (relaxBGM && relaxBGM.source) {
+        try {
+            relaxBGM.source.stop();
+        } catch(e) {
+            console.log('RelaxBGM stop error:', e);
+        }
+        relaxBGM = null;
+    }
+}
+
+// 音量調整
+volumeControl.addEventListener('input', function(e) {
+    const volume = e.target.value / 100;
+    
+    workBGMs.forEach(function(bgm) {
+        if (bgm) bgm.volume = volume;
+    });
+    
+    breakBGMs.forEach(function(bgm) {
+        if (bgm) bgm.volume = volume;
+    });
+    
+    if (currentAudio) {
+        currentAudio.volume = volume;
+    }
+    
+    if (relaxBGM && relaxBGM.gainNode) {
+        relaxBGM.gainNode.gain.value = volume * 0.5;
+    }
+});
+
+// 時間表示フォーマット
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return mins.toString().padStart(2, '0') + ':' + secs.toString().padStart(2, '0');
+}
+
+// 表示更新
+function updateDisplay() {
+    display.textContent = formatTime(timeLeft);
+    const progressPercent = ((totalTime - timeLeft) / totalTime) * 100;
+    progress.style.width = progressPercent + '%';
+    
+    const totalMinutes = sessions.reduce((sum, s) => sum + s.work + s.break, 0);
+    progressText.textContent = `${totalElapsedMinutes} / ${totalMinutes} 分完了`;
+}
+
+// セッション情報更新
+function updateSessionInfo() {
+    sessionTitle.textContent = `セッション ${currentSessionIndex + 1}/5`;
+    sessionLabel.textContent = sessions[currentSessionIndex].label;
+    
+    document.querySelectorAll('.session-select-btn').forEach(function(btn, index) {
+        if (index === currentSessionIndex) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+// セッション選択
+function selectSession(index) {
+    if (isRunning) {
+        alert('タイマーを停止してからセッションを選択してください');
+        return;
+    }
+    
+    currentSessionIndex = index;
+    isBreakTime = false;
+    timeLeft = sessions[index].work * 60;
+    totalTime = sessions[index].work * 60;
+    
+    totalElapsedMinutes = 0;
+    for (let i = 0; i < index; i++) {
+        totalElapsedMinutes += sessions[i].work + sessions[i].break;
+    }
+    
+    phaseIndicator.textContent = '作業時間';
+    phaseIndicator.classList.remove('break');
+    updateSessionInfo();
+    updateDisplay();
+}
+
+// タイマー開始
+function startTimer() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    
+    // 既存のBGMを停止
+    stopAllAudio();
+    
+    isRunning = true;
+    startBtn.style.display = 'none';
+    pauseBtn.style.display = 'inline-block';
+
+ // BGM再生
+    if (!isBreakTime) {
+        const availableWorkBGMs = workBGMs.filter(function(bgm) { return bgm !== null; });
+        console.log('作業用BGM数:', availableWorkBGMs.length);  // ← 追加
+        if (availableWorkBGMs.length > 0) {
+            const randomBGM = availableWorkBGMs[Math.floor(Math.random() * availableWorkBGMs.length)];
+            currentAudio = randomBGM;
+            currentAudio.currentTime = 0;
+            console.log('作業BGM再生試行');  // ← 追加
+            currentAudio.play().catch(function(e) {
+                console.log('Work BGM再生エラー:', e);
+            });
+            phaseIndicator.textContent = '作業時間 🎯 作業用BGM';
+        } else {
+            console.log('作業用BGMなし');  // ← 追加
+            phaseIndicator.textContent = '作業時間 🎯';
+        }
+    } else {
+        const availableBreakBGMs = breakBGMs.filter(function(bgm) { return bgm !== null; });
+        console.log('休憩用BGM数:', availableBreakBGMs.length);  // ← 追加
+        if (availableBreakBGMs.length > 0) {
+            const randomBGM = availableBreakBGMs[Math.floor(Math.random() * availableBreakBGMs.length)];
+            currentAudio = randomBGM;
+            currentAudio.currentTime = 0;
+            console.log('休憩BGM再生試行');  // ← 追加
+            currentAudio.play().catch(function(e) {
+                console.log('Break BGM再生エラー:', e);
+            });
+            phaseIndicator.textContent = '休憩時間 ☕ 休憩用BGM';
+        } else {
+            console.log('休憩用BGMなし、リラックスBGM使用');  // ← 追加
+            phaseIndicator.textContent = '休憩時間 ☕ リラックスBGM';
+            relaxBGM = createRelaxBGM();
+            if (relaxBGM && relaxBGM.source) {
+                relaxBGM.source.start(0);
+            }
+        }
+    }
+
+    // タイマーループ
+    timer = setInterval(function() {
+        timeLeft--;
+        if (timeLeft % 60 === 0) {
+            totalElapsedMinutes++;
+        }
+        updateDisplay();
+
+        if (timeLeft === 0) {
+            clearInterval(timer);
+            isRunning = false;
+            playChime();
+            stopAllAudio();
+
+            if (!isBreakTime) {
+                isBreakTime = true;
+                timeLeft = sessions[currentSessionIndex].break * 60;
+                totalTime = sessions[currentSessionIndex].break * 60;
+                phaseIndicator.textContent = '休憩時間 ☕';
+                phaseIndicator.classList.add('break');
+                updateDisplay();
+                
+                startTimer();
+            } else {
+                isBreakTime = false;
+                currentSessionIndex++;
+                phaseIndicator.classList.remove('break');
+
+                if (currentSessionIndex < sessions.length) {
+                    timeLeft = sessions[currentSessionIndex].work * 60;
+                    totalTime = sessions[currentSessionIndex].work * 60;
+                    phaseIndicator.textContent = '作業時間 🎯';
+                    updateSessionInfo();
+                    updateDisplay();
+                    
+                    startTimer();
+                } else {
+                    phaseIndicator.textContent = '全セッション完了！';
+                    display.textContent = '完了!';
+                    startBtn.style.display = 'none';
+                    pauseBtn.style.display = 'none';
+                    return;
+                }
+            }
+        }
+    }, 1000);
+}
+
+// タイマー一時停止
+function pauseTimer() {
+    isRunning = false;
+    clearInterval(timer);
+    stopAllAudio();
+    startBtn.style.display = 'inline-block';
+    pauseBtn.style.display = 'none';
+}
+
+// タイマーリセット
+function resetTimer() {
+    isRunning = false;
+    clearInterval(timer);
+    stopAllAudio();
+    
+    currentSessionIndex = 0;
+    isBreakTime = false;
+    timeLeft = sessions[0].work * 60;
+    totalTime = sessions[0].work * 60;
+    totalElapsedMinutes = 0;
+    
+    phaseIndicator.textContent = '作業時間';
+    phaseIndicator.classList.remove('break');
+    updateSessionInfo();
+    updateDisplay();
+    
+    startBtn.style.display = 'inline-block';
+    pauseBtn.style.display = 'none';
+}
+
+// イベントリスナー登録
+startBtn.addEventListener('click', startTimer);
+pauseBtn.addEventListener('click', pauseTimer);
+resetBtn.addEventListener('click', resetTimer);
+
+// 初期化
+generateSessions();
+timeLeft = sessions[0].work * 60;
+totalTime = sessions[0].work * 60;
+updateDisplay();
+    </script>
+</body>
+</html>
