@@ -850,7 +850,12 @@ function startTimer() {
         if (availableBreakBGMs.length > 0) {
             const randomBGM = availableBreakBGMs[Math.floor(Math.random() * availableBreakBGMs.length)];
             currentAudio = randomBGM;
-            currentAudio.currentTime = 0;
+            try{
+                currentAudio.currentTime = 0;
+            }catch(e){
+                console.log('currentTimeリセットスキップ(iOS仕様):' e);
+            }
+            
             console.log('休憩BGM再生試行');  // ← 追加
             currentAudio.play().catch(function(e) {
                 console.log('Break BGM再生エラー:', e);
