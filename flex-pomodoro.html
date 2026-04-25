@@ -820,6 +820,11 @@ function startTimer() {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
     
+    // iOSのためにAudioContextを明示的に再開
+    if (audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+    
     // 既存のBGMを停止
     stopAllAudio();
     
@@ -831,37 +836,57 @@ function startTimer() {
     if (!isBreakTime) {
         const availableWorkBGMs = workBGMs.filter(function(bgm) { return bgm !== null; });
         console.log('作業用BGM数:', availableWorkBGMs.length);  // ← 追加
-        if (availableWorkBGMs.length > 0) {
-            const randomBGM = availableWorkBGMs[Math.floor(Math.random() * availableWorkBGMs.length)];
-            currentAudio = randomBGM;
-            currentAudio.currentTime = 0;
-            console.log('作業BGM再生試行');  // ← 追加
-            currentAudio.play().catch(function(e) {
-                console.log('Work BGM再生エラー:', e);
-            });
-            phaseIndicator.textContent = '作業時間 🎯 作業用BGM';
-        } else {
-            console.log('作業用BGMなし');  // ← 追加
+    if (availableWorkBGMs.length > 0) {
+        const randomBGM = availableWorkBGMs[Math.floor(Math.random() * availableWorkBGMs.length)];
+        currentAudio = randomBGM;
+    
+        // iOSのためにloadを呼ぶ
+        currentAudio.load();
+        currentAudio.currentTime = 0;
+        
+        console.log('作業BGM再生試行');
+        currentAudio.play().catch(function(e) {
+            console.log('Work BGM再生エラー:', e);
+            // iOSで失敗した場合、AudioContextを再開してリトライ
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume().then(function() {
+                    currentAudio.play();
+                });
+            }
+        });
+        phaseIndicator.textContent = '作業時間 🎯 作業用BGM';
+    } else {
+                console.log('作業用BGMなし');  // ← 追加
             phaseIndicator.textContent = '作業時間 🎯';
         }
     } else {
         const availableBreakBGMs = breakBGMs.filter(function(bgm) { return bgm !== null; });
         console.log('休憩用BGM数:', availableBreakBGMs.length);  // ← 追加
-        if (availableBreakBGMs.length > 0) {
-            const randomBGM = availableBreakBGMs[Math.floor(Math.random() * availableBreakBGMs.length)];
-            currentAudio = randomBGM;
-            try{
-                currentAudio.currentTime = 0;
-            }catch(e){
-                console.log('currentTimeリセットスキップ(iOS仕様):', e);
+     if (availableBreakBGMs.length > 0) {
+        const randomBGM = availableBreakBGMs[Math.floor(Math.random() * availableBreakBGMs.length)];
+        currentAudio = randomBGM;
+        
+        // iOSのためにloadを呼ぶ
+        currentAudio.load();
+        
+        try{
+            currentAudio.currentTime = 0;
+        }catch(e){
+            console.log('currentTimeリセットスキップ(iOS仕様):', e);
+        }
+        
+        console.log('休憩BGM再生試行');
+        currentAudio.play().catch(function(e) {
+            console.log('Break BGM再生エラー:', e);
+            // iOSで失敗した場合、AudioContextを再開してリトライ
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume().then(function() {
+                    currentAudio.play();
+                });
             }
-            
-            console.log('休憩BGM再生試行');  // ← 追加
-            currentAudio.play().catch(function(e) {
-                console.log('Break BGM再生エラー:', e);
-            });
-            phaseIndicator.textContent = '休憩時間 ☕ 休憩用BGM';
-        } else {
+        });
+        phaseIndicator.textContent = '休憩時間 ☕ 休憩用BGM';
+    }else {
             console.log('休憩用BGMなし、リラックスBGM使用');  // ← 追加
             phaseIndicator.textContent = '休憩時間 ☕ リラックスBGM';
             relaxBGM = createRelaxBGM();
