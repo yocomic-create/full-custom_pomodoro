@@ -453,15 +453,15 @@
                     </div>
                     <div class="file-item">
                         <label>BGM 2:</label>
-                        <input type="file" id="workBGM1" accept=".mp3,audio/*">
+                        <input type="file" id="workBGM2" accept=".mp3,audio/*">
                     </div>
                     <div class="file-item">
                         <label>BGM 3:</label>
-                        <input type="file" id="workBGM1" accept=".mp3,audio/*">
+                        <input type="file" id="workBGM3" accept=".mp3,audio/*">
                     </div>
                     <div class="file-item">
                         <label>BGM 4:</label>
-                        <input type="file" id="workBGM1" accept=".mp3,audio/*">
+                        <input type="file" id="workBGM4" accept=".mp3,audio/*">
                     </div>
                 </div>
 
@@ -494,7 +494,7 @@
         <div class="total-time" id="totalTime">
             合計時間: 3時間40分 (220分)
         </div>
-
+    </div>
     <script>
 // BGM関連の変数
 let audioContext = null;
@@ -853,7 +853,7 @@ function startTimer() {
             try{
                 currentAudio.currentTime = 0;
             }catch(e){
-                console.log('currentTimeリセットスキップ(iOS仕様):' e);
+                console.log('currentTimeリセットスキップ(iOS仕様):', e);
             }
             
             console.log('休憩BGM再生試行');  // ← 追加
